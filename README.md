@@ -8,6 +8,18 @@ Every agentic voice demo in telecom care apologizes for an outage it cannot see.
 
 This repo is an argument in code: the reasoning loop must consult live network health before it speaks. Cell site status is a first-class input to the model's tool set, not an afterthought handed off to a separate ticket queue. Everything else here — telephony, transcription, TTS, translation — is plumbing around that one commitment.
 
+## Seeing the argument
+
+Below are two screenshots captured from the live demo that illustrate the core claim. Click each caption to open the live demo at http://138.68.42.250/.
+
+![Happy path: site health check succeeds](docs/screenshots/happy-path.png)
+
+[Successful site-health tool call (happy path)](http://138.68.42.250/)
+
+![Validator rejection: booking blocked by policy](docs/screenshots/validator-reject.png)
+
+[Booking blocked by the validator (reason surfaced to the caller)](http://138.68.42.250/)
+
 ## What it does
 
 ```
@@ -70,6 +82,7 @@ Plain Python. Deterministic. Checks every proposed write against policy before c
 - **Accented speech.** Streaming Transcribe WER climbs on accented English. Cascaded path degrades gracefully (garbled text still triggers escalation); S2S failure modes are less legible.
 - **Validator rejections.** When a write is blocked, the agent says so out loud rather than silently swallowing the intent. This is a feature. It also means the caller hears "I can't book that for you" more often than a demo would like.
 - **Simulator, not a network.** Site health is synthetic. Real integration is a different project.
+- **Demo uses FakeBedrock.** Tool calls use canned inputs in the demo; real Bedrock reasoning is not yet wired.
 
 ## Setup
 
