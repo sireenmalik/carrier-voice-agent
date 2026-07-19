@@ -1,2 +1,5 @@
 boto3>=1.35
 pytest>=8.0
+fastapi>=0.100
+uvicorn[standard]>=0.23
+sse-starlette>=1.0

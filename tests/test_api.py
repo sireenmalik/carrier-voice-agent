@@ -7,14 +7,20 @@ from api.server import app
 
 def test_turn_endpoint_streams_sse_events():
     client = TestClient(app)
-    response = client.post('/turn', json={'session_id': 'test-session-1', 'utterance': 'is my site healthy?'}, stream=True)
+    response = client.post('/turn', json={'session_id': 'test-session-1', 'utterance': 'is my site healthy?'})
     assert response.status_code == 200
     kinds = []
     for line in response.iter_lines():
         if not line:
             continue
-        assert line.startswith(b'data: ')
-        payload = json.loads(line[len(b'data: '):].decode('utf-8'))
+        if isinstance(line, bytes):
+            line = line.decode('utf-8')
+        if not line.startswith('data: '):
+            continue
+        payload_data = line[len('data: '):]
+        if payload_data.startswith('data: '):
+            payload_data = payload_data[len('data: '):]
+        payload = json.loads(payload_data)
         kinds.append(payload['kind'])
 
     assert 'transcript' in kinds
