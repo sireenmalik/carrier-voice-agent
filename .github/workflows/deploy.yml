@@ -1,0 +1,25 @@
+name: Deploy to Droplet
+
+on:
+  push:
+    branches: [ main ]
+    # only run when files outside docs/ changed
+    paths-ignore:
+      - 'docs/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Run deploy on droplet via SSH
+        uses: appleboy/ssh-action@v0.1.8
+        with:
+          host: ${{ secrets.DROPLET_HOST }}
+          username: ${{ secrets.DROPLET_USER }}
+          key: ${{ secrets.DROPLET_SSH_KEY }}
+          script: |
+            # Pull latest and run redeploy as deploy user
+            sudo -H -u deploy bash -lc '/opt/carrier-voice-agent/deploy/deploy.sh'

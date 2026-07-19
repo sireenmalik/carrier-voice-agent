@@ -25,6 +25,7 @@ function App() {
   const [utterance, setUtterance] = useState('');
   const [events, setEvents] = useState<EventPayload[]>([]);
   const sourceRef = useRef<EventSource | null>(null);
+  const eventsContainerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState('Ready');
 
   useEffect(() => {
@@ -32,6 +33,22 @@ function App() {
       sourceRef.current?.close();
     };
   }, []);
+
+  useEffect(() => {
+    const el = eventsContainerRef.current;
+    if (!el) return;
+    // scroll to bottom to keep latest event in view
+    try {
+      window.requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+    } catch {
+      // ignore in non-browser environments
+      setTimeout(() => {
+        el.scrollTop = el.scrollHeight;
+      }, 0);
+    }
+  }, [events.length]);
 
   const clearSession = () => {
     sourceRef.current?.close();
@@ -50,12 +67,12 @@ function App() {
 
     sourceRef.current?.close();
     setEvents((prev) => [
+      ...prev,
       {
         ts: new Date().toISOString(),
         kind: 'system',
         payload: { message: 'Sending turn to backend...' },
       },
-      ...prev,
     ]);
 
     const eventSource = new EventSource(
@@ -67,15 +84,15 @@ function App() {
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as EventPayload;
-        setEvents((prev) => [payload, ...prev]);
+        setEvents((prev) => [...prev, payload]);
       } catch {
         setEvents((prev) => [
+          ...prev,
           {
             ts: new Date().toISOString(),
             kind: 'error',
             payload: { message: event.data },
           },
-          ...prev,
         ]);
       }
     };
@@ -143,6 +160,9 @@ function App() {
                 className="w-full rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
                 placeholder="Ask the agent about an outage, account, appointment, or escalation."
               />
+              <p className="text-xs text-slate-400">
+                FakeBedrock returns canned tool calls; ZIPs and account IDs in canned responses may not match what you typed. Set BEDROCK_MODEL_ID_TEXT to use real Bedrock.
+              </p>
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
@@ -173,7 +193,7 @@ function App() {
                 Clear
               </button>
             </div>
-            <div className="space-y-3 overflow-y-auto max-h-[70vh] pr-1">{renderedEvents}</div>
+            <div ref={eventsContainerRef} className="space-y-3 overflow-y-auto max-h-[70vh] pr-1">{renderedEvents}</div>
           </section>
         </div>
       </div>
