@@ -56,19 +56,40 @@ class FakeBedrock:
         return self._tool_use_response(tool_name, tool_input)
 
     def _choose_tool(self, utterance: str) -> tuple[str, dict[str, Any]]:
+        # Normalize intent tokens
         normalized = utterance.lower()
+
+        # Prefer real synthetic IDs used by the simulator so handlers succeed.
+        # Pick a healthy site deterministically from sim.network.all_sites().
+        try:
+            from sim.network import all_sites
+            import random
+            healthy_sites = [s for s, status in all_sites().items() if status == "healthy"]
+            if healthy_sites:
+                cell_site = random.Random(42).choice(healthy_sites)
+            else:
+                cell_site = "SITE-001"
+        except Exception:
+            cell_site = "SITE-001"
+
+        # Use a valid account id present in sim.accounts
+        account_id = "ACC-1003"
+
+        # Use a ZIP that exists in sim/outages
+        zip_code = "94103"
+
         if any(token in normalized for token in ("book", "appointment", "schedule")):
             return "book_appointment", {
-                "account_id": "acct-100",
+                "account_id": account_id,
                 "slot": "2026-07-20T10:00:00",
             }
         if any(token in normalized for token in ("account", "balance", "plan")):
-            return "get_account_status", {"account_id": "acct-100"}
+            return "get_account_status", {"account_id": account_id}
         if any(token in normalized for token in ("outage", "incident", "zip")):
-            return "lookup_outage", {"zip_code": "10001"}
+            return "lookup_outage", {"zip_code": zip_code}
         if any(token in normalized for token in ("human", "agent", "escalate")):
             return "escalate_to_human", {"reason": utterance or "The caller requested a human."}
-        return "get_site_health", {"cell_site_id": "site-001"}
+        return "get_site_health", {"cell_site_id": cell_site}
 
     def _follow_up_response(self, user_message: dict[str, Any]) -> dict[str, Any]:
         tool_result = None
