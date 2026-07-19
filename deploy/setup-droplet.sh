@@ -25,7 +25,7 @@ apt-get install -y software-properties-common ca-certificates curl gnupg lsb-rel
 
 # Python 3.12 on Ubuntu 24.04
 echo "Installing Python 3.12 and tools..."
-apt-get install -y python3.12 python3.12-venv python3-pip git nginx ufw
+apt-get install -y python3.12 python3.12-venv python3-pip git nginx ufw certbot python3-certbot-nginx
 
 # Node.js 20 via NodeSource
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | sed 's/v//')" != "20" ]; then
