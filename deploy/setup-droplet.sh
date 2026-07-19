@@ -156,6 +156,8 @@ NGINX
   fi
 
 if [ ! -L "$NGINX_LINK" ]; then
+  # Remove default nginx site if present so our site becomes the default
+  rm -f /etc/nginx/sites-enabled/default
   ln -s "$NGINX_SITE" "$NGINX_LINK"
 fi
 
