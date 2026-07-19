@@ -3,9 +3,7 @@ name: Deploy to Droplet
 on:
   push:
     branches: [ main ]
-    # only run when files outside docs/ changed
-    paths-ignore:
-      - 'docs/**'
+  workflow_dispatch:
 
 jobs:
   deploy:
