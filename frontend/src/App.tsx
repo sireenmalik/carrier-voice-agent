@@ -58,8 +58,6 @@ function App() {
     setStatus('Ready');
   };
 
-  const apiBaseUrl = import.meta.env.VITE_API_BASE ?? 'http://localhost:8080';
-
   const startTurn = () => {
     if (!utterance.trim()) {
       return;
@@ -76,7 +74,7 @@ function App() {
     ]);
 
     const eventSource = new EventSource(
-      `${apiBaseUrl}/turn?session_id=${encodeURIComponent(sessionId)}&utterance=${encodeURIComponent(utterance)}`
+      `/turn?session_id=${encodeURIComponent(sessionId)}&utterance=${encodeURIComponent(utterance)}`
     );
     sourceRef.current = eventSource;
     setStatus('Streaming');
