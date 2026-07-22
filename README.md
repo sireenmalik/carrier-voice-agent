@@ -3,15 +3,15 @@
 An agentic voice pipeline for telecom customer care. It answers a call, checks the live state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
-Status: MVP in progress. The pipeline runs end to end; real Bedrock reasoning is being wired now. See Where it breaks for honest limits.
+**Status: MVP**. The pipeline runs end to end; real Bedrock reasoning is being wired now. See Where it breaks for honest limits.
 
 Live demo: https://carrier.sireenmalik.online/
 
-Application — Python 3.11 · FastAPI · Server-Sent Events · React + TypeScript · Vite · nginx · systemd · GitHub Actions CI/CD · Let's Encrypt
+**Application **— Python 3.11 · FastAPI · Server-Sent Events · React + TypeScript · Vite · nginx · systemd · GitHub Actions CI/CD · Let's Encrypt
 
-AWS — Bedrock (Converse API, tool use) · IAM · KMS · CloudTrail · Service Control Policies · Budgets · Cost Anomaly Detection · PrivateLink / VPC endpoints
+**AWS — Bedrock (Converse API, tool use) · IAM · KMS · CloudTrail · Service Control Policies · Budgets · Cost Anomaly Detection · PrivateLink / VPC endpoints**
 
-Architecture — single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder · two-path benchmarking on latency, cost and tool-call accuracy
+**Architecture **— single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder · two-path benchmarking on latency, cost and tool-call accuracy
 
 In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Amazon Connect telephony · Translate for multilingual callers.
 ## The argument
