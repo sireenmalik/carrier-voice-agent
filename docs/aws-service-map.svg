@@ -1,0 +1,181 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1110" width="1600" height="1110" font-family="DejaVu Sans, Helvetica, Arial, sans-serif">
+<defs>
+  <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#3D4852"/>
+  </marker>
+  <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#C98A16"/>
+  </marker>
+  <marker id="arG" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" fill="#9A9AA0"/>
+  </marker>
+</defs>
+
+<rect width="1600" height="1110" fill="#FFFFFF"/>
+
+<text x="50" y="58" font-size="34" font-weight="bold" fill="#1F2933">Carrier Voice Agent — AWS service map</text>
+<text x="50" y="90" font-size="17" fill="#5A6672">Service-model layers: what you operate (IaaS) vs. what AWS operates (PaaS / MaaS / CPaaS). Green block is the operator trust boundary.</text>
+
+<!-- ================= TELEPHONY ================= -->
+<rect x="50" y="305" width="280" height="225" rx="12" fill="#FDF4E4" stroke="#C98A16" stroke-width="2.5" stroke-dasharray="8 5"/>
+<text x="70" y="333" font-size="14" font-weight="bold" fill="#8A5E08">TELEPHONY · CPaaS</text>
+<text x="70" y="352" font-size="12" fill="#8A5E08">demo only — release number after demo</text>
+
+<rect x="75" y="368" width="230" height="70" rx="8" fill="#FFFFFF" stroke="#D9A64A" stroke-width="2"/>
+<text x="190" y="395" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Amazon Connect</text>
+<text x="190" y="416" font-size="12.5" fill="#5A6672" text-anchor="middle">DID number + contact flow</text>
+
+<rect x="75" y="458" width="230" height="60" rx="8" fill="#FFFFFF" stroke="#D9A64A" stroke-width="2"/>
+<text x="190" y="482" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">AWS Lambda</text>
+<text x="190" y="502" font-size="12.5" fill="#5A6672" text-anchor="middle">PaaS · bridge to FastAPI</text>
+
+<!-- caller -->
+<rect x="75" y="180" width="230" height="70" rx="35" fill="#F2F4F7" stroke="#8A93A0" stroke-width="2"/>
+<text x="190" y="207" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Caller</text>
+<text x="190" y="228" font-size="12.5" fill="#5A6672" text-anchor="middle">phone  ·  or browser mic</text>
+
+<!-- ================= OPERATOR TIER ================= -->
+<rect x="360" y="170" width="630" height="530" rx="14" fill="#E9F5EC" stroke="#2E7D4F" stroke-width="3.5"/>
+<text x="382" y="198" font-size="15" font-weight="bold" fill="#1D5C39">OPERATOR TIER — self-hosted / IaaS  ·  TRUST BOUNDARY</text>
+<text x="850" y="198" font-size="12.5" fill="#1D5C39" text-anchor="end">DO droplet → operator VPC → Outpost</text>
+
+<rect x="390" y="210" width="270" height="60" rx="8" fill="#FFFFFF" stroke="#7FB894" stroke-width="2"/>
+<text x="525" y="235" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">FastAPI + nginx + systemd</text>
+<text x="525" y="255" font-size="12.5" fill="#5A6672" text-anchor="middle">SSE event stream</text>
+
+<rect x="690" y="210" width="270" height="60" rx="8" fill="#FFFFFF" stroke="#7FB894" stroke-width="2"/>
+<text x="825" y="235" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">React + Vite frontend</text>
+<text x="825" y="255" font-size="12.5" fill="#5A6672" text-anchor="middle">renders reasoning trace</text>
+
+<rect x="390" y="310" width="570" height="70" rx="8" fill="#FFFFFF" stroke="#7FB894" stroke-width="2"/>
+<text x="675" y="337" font-size="17" font-weight="bold" fill="#1F2933" text-anchor="middle">Agent loop — Bedrock Converse (yours)</text>
+<text x="675" y="360" font-size="12.5" fill="#5A6672" text-anchor="middle">single tool-using agent  ·  perceive → decide → act  ·  temperature 0</text>
+
+<rect x="390" y="420" width="370" height="80" rx="8" fill="#FFF4C9" stroke="#C98A16" stroke-width="3.5"/>
+<text x="575" y="450" font-size="17" font-weight="bold" fill="#1F2933" text-anchor="middle">Deterministic validator</text>
+<text x="575" y="472" font-size="12.5" fill="#5A6672" text-anchor="middle">policy enforcement point</text>
+<text x="575" y="490" font-size="12.5" fill="#5A6672" text-anchor="middle">at tool-dispatch boundary</text>
+
+<rect x="790" y="420" width="170" height="80" rx="8" fill="#FFF4C9" stroke="#C98A16" stroke-width="2.5"/>
+<text x="875" y="452" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Audit log</text>
+<text x="875" y="473" font-size="12.5" fill="#5A6672" text-anchor="middle">append-only</text>
+<text x="875" y="490" font-size="12.5" fill="#5A6672" text-anchor="middle">decisions + context</text>
+
+<rect x="390" y="560" width="270" height="90" rx="8" fill="#FFFFFF" stroke="#7FB894" stroke-width="2"/>
+<text x="525" y="588" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Tools (5)</text>
+<text x="525" y="609" font-size="12.5" fill="#5A6672" text-anchor="middle">site health · outage · account</text>
+<text x="525" y="628" font-size="12.5" fill="#5A6672" text-anchor="middle">book appointment · escalate</text>
+
+<rect x="690" y="560" width="270" height="90" rx="8" fill="#FFFFFF" stroke="#7FB894" stroke-width="2"/>
+<text x="825" y="588" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Network simulator</text>
+<text x="825" y="609" font-size="12.5" fill="#5A6672" text-anchor="middle">20 synthetic cell sites</text>
+<text x="825" y="628" font-size="12.5" fill="#5A6672" text-anchor="middle">deterministic seed</text>
+
+<!-- ================= BOUNDARY BAR ================= -->
+<rect x="1000" y="230" width="44" height="430" rx="10" fill="#D9E2F7" stroke="#3A5BC7" stroke-width="2.5"/>
+<text x="1022" y="445" font-size="14.5" font-weight="bold" fill="#243D8F" text-anchor="middle" transform="rotate(-90 1022 445)">PrivateLink / VPC endpoint  ·  In-Region profile</text>
+
+<!-- ================= AWS MANAGED ================= -->
+<rect x="1060" y="195" width="490" height="500" rx="14" fill="#EDF1FA" stroke="#3A5BC7" stroke-width="3"/>
+<text x="1082" y="223" font-size="15" font-weight="bold" fill="#243D8F">AWS MANAGED — model and AI services</text>
+<text x="1082" y="242" font-size="12.5" fill="#243D8F">stateless inference only · no orchestration, no state</text>
+
+<rect x="1090" y="255" width="430" height="95" rx="8" fill="#FFFFFF" stroke="#8FA5DC" stroke-width="2"/>
+<text x="1305" y="282" font-size="16.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Amazon Bedrock — Converse API</text>
+<text x="1305" y="305" font-size="12.5" fill="#5A6672" text-anchor="middle">Claude Haiku 4.5  ·  Nova Micro  ·  Nova Lite</text>
+<text x="1305" y="325" font-size="12.5" fill="#5A6672" text-anchor="middle">MaaS — per token, swappable backend</text>
+<text x="1305" y="342" font-size="12" font-weight="bold" fill="#2E7D4F" text-anchor="middle">PATH A + B reasoning</text>
+
+<rect x="1090" y="370" width="430" height="70" rx="8" fill="#FFFFFF" stroke="#8FA5DC" stroke-width="2"/>
+<text x="1305" y="396" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Nova 2 Sonic — bidirectional stream</text>
+<text x="1305" y="418" font-size="12.5" fill="#5A6672" text-anchor="middle">speech-to-speech  ·  AWS-locked, fewest Regions</text>
+<text x="1305" y="434" font-size="12" font-weight="bold" fill="#C0392B" text-anchor="middle">PATH B</text>
+
+<rect x="1090" y="460" width="430" height="62" rx="8" fill="#FFFFFF" stroke="#8FA5DC" stroke-width="2"/>
+<text x="1305" y="485" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Amazon Transcribe — streaming ASR</text>
+<text x="1305" y="507" font-size="12" font-weight="bold" fill="#2E7D4F" text-anchor="middle">PATH A · speech in</text>
+
+<rect x="1090" y="542" width="430" height="62" rx="8" fill="#FFFFFF" stroke="#8FA5DC" stroke-width="2"/>
+<text x="1305" y="567" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Amazon Polly — neural TTS</text>
+<text x="1305" y="589" font-size="12" font-weight="bold" fill="#2E7D4F" text-anchor="middle">PATH A · speech out</text>
+
+<rect x="1090" y="624" width="430" height="52" rx="8" fill="#FFFFFF" stroke="#8FA5DC" stroke-width="2"/>
+<text x="1305" y="656" font-size="16" font-weight="bold" fill="#1F2933" text-anchor="middle">Amazon Translate — multilingual</text>
+
+<!-- ================= DECLINED ================= -->
+<rect x="1060" y="730" width="490" height="115" rx="12" fill="#F4F4F5" stroke="#9A9AA0" stroke-width="2.5" stroke-dasharray="7 5"/>
+<text x="1082" y="757" font-size="14" font-weight="bold" fill="#6B7178">DECLINED BY DESIGN</text>
+<text x="1305" y="787" font-size="16" font-weight="bold" fill="#6B7178" text-anchor="middle">AgentCore Runtime  ·  Bedrock Agents</text>
+<text x="1305" y="808" font-size="12.5" fill="#7C838B" text-anchor="middle">would move the loop, session state and context</text>
+<text x="1305" y="826" font-size="12.5" fill="#7C838B" text-anchor="middle">assembly across the trust boundary</text>
+
+<!-- ================= GOVERNANCE ================= -->
+<rect x="50" y="880" width="1500" height="180" rx="14" fill="#FAF0F5" stroke="#9C4070" stroke-width="2.5"/>
+<text x="72" y="908" font-size="15" font-weight="bold" fill="#7A2F55">GOVERNANCE, RESIDENCY AND COST — cross-cutting, applies to every AWS call above</text>
+
+<rect x="90" y="925" width="700" height="105" rx="8" fill="#FFFFFF" stroke="#C98AAB" stroke-width="2"/>
+<text x="440" y="952" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Identity, keys and proof</text>
+<text x="440" y="975" font-size="13" fill="#5A6672" text-anchor="middle">IAM scoped user (no root)  ·  KMS customer-managed keys</text>
+<text x="440" y="996" font-size="13" fill="#5A6672" text-anchor="middle">SCP denying out-of-Region bedrock:InvokeModel</text>
+<text x="440" y="1017" font-size="13" fill="#5A6672" text-anchor="middle">CloudTrail to prove invocation Region  ·  AI-services opt-out</text>
+
+<rect x="820" y="925" width="690" height="105" rx="8" fill="#FFFFFF" stroke="#C98AAB" stroke-width="2"/>
+<text x="1165" y="952" font-size="15.5" font-weight="bold" fill="#1F2933" text-anchor="middle">Cost rails and sovereignty ladder</text>
+<text x="1165" y="975" font-size="13" fill="#5A6672" text-anchor="middle">Budgets 20 USD  ·  Cost Anomaly Detection (alerts, not caps)</text>
+<text x="1165" y="996" font-size="13" fill="#5A6672" text-anchor="middle">public API → PrivateLink → In-Region → sovereign cloud</text>
+<text x="1165" y="1017" font-size="13" fill="#5A6672" text-anchor="middle">→ Dedicated Local Zone / Outpost → fully self-hosted</text>
+
+<!-- ================= ARROWS ================= -->
+<!-- caller down to connect -->
+<path d="M 190 250 V 368" fill="none" stroke="#C98A16" stroke-width="2.5" marker-end="url(#arA)"/>
+<!-- connect to lambda -->
+<path d="M 190 438 V 458" fill="none" stroke="#C98A16" stroke-width="2.5" marker-end="url(#arA)"/>
+<!-- lambda to fastapi -->
+<path d="M 305 488 H 345 V 240 H 390" fill="none" stroke="#C98A16" stroke-width="2.5" marker-end="url(#arA)"/>
+<!-- caller browser path to frontend -->
+<path d="M 190 180 V 145 H 825 V 210" fill="none" stroke="#3D4852" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>
+<text x="600" y="138" font-size="13" fill="#3D4852" text-anchor="middle">browser mic path — no telephony needed</text>
+
+<!-- fastapi to frontend -->
+<path d="M 660 240 H 690" fill="none" stroke="#3D4852" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<!-- fastapi down to loop -->
+<path d="M 525 270 V 310" fill="none" stroke="#3D4852" stroke-width="2.5" marker-end="url(#ar)"/>
+<!-- loop to validator -->
+<path d="M 630 380 V 420" fill="none" stroke="#3D4852" stroke-width="3" marker-end="url(#ar)"/>
+<text x="645" y="404" font-size="13" fill="#3D4852">proposed write</text>
+<!-- validator to tools -->
+<path d="M 480 500 V 560" fill="none" stroke="#2E7D4F" stroke-width="3" marker-end="url(#ar)"/>
+<text x="492" y="535" font-size="13" font-weight="bold" fill="#2E7D4F">allow</text>
+<!-- validator deny back to loop -->
+<path d="M 390 465 H 372 V 345 H 390" fill="none" stroke="#C0392B" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#ar)"/>
+<text x="366" y="410" font-size="13" fill="#C0392B" text-anchor="end" transform="rotate(-90 366 410)">deny + reason</text>
+<!-- validator to audit -->
+<path d="M 760 460 H 790" fill="none" stroke="#C98A16" stroke-width="2.5" marker-end="url(#arA)"/>
+<!-- tools to simulator -->
+<path d="M 660 605 H 690" fill="none" stroke="#3D4852" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+
+<!-- loop out to boundary bar -->
+<path d="M 960 345 H 1000" fill="none" stroke="#3A5BC7" stroke-width="3.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<text x="980" y="330" font-size="13" font-weight="bold" fill="#243D8F" text-anchor="middle">inference only</text>
+<!-- fastapi out to bar (audio services) -->
+<path d="M 960 240 H 978 V 270 H 1000" fill="none" stroke="#3A5BC7" stroke-width="3" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<text x="905" y="290" font-size="13" fill="#243D8F" text-anchor="middle">audio streams</text>
+
+<!-- bar fan-out -->
+<path d="M 1044 300 H 1090" fill="none" stroke="#3A5BC7" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<path d="M 1044 400 H 1090" fill="none" stroke="#3A5BC7" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<path d="M 1044 490 H 1090" fill="none" stroke="#3A5BC7" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<path d="M 1044 572 H 1090" fill="none" stroke="#3A5BC7" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+<path d="M 1044 648 H 1090" fill="none" stroke="#3A5BC7" stroke-width="2.5" marker-end="url(#ar)" marker-start="url(#ar)"/>
+
+<!-- declined up to aws -->
+<path d="M 1305 730 V 697" fill="none" stroke="#9A9AA0" stroke-width="2.5" stroke-dasharray="7 5" marker-end="url(#arG)"/>
+
+<!-- governance up-links -->
+<path d="M 675 880 V 705" fill="none" stroke="#9C4070" stroke-width="2" stroke-dasharray="5 5"/>
+<path d="M 1305 880 V 850" fill="none" stroke="#9C4070" stroke-width="2" stroke-dasharray="5 5"/>
+
+<!-- legend -->
+<text x="50" y="1092" font-size="13" fill="#5A6672">Solid green block = you operate it (IaaS).  Blue = AWS operates it (MaaS).  Amber dashed = demo convenience, released after recording.  Grey dashed = evaluated and declined.</text>
+
+</svg>
