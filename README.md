@@ -11,7 +11,23 @@ Live demo: https://carrier.sireenmalik.online/
 
 **AWS — Bedrock (Converse API, tool use) · IAM · KMS · CloudTrail · Service Control Policies · Budgets · Cost Anomaly Detection · PrivateLink / VPC endpoints**
 
-**Architecture **— single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder · two-path benchmarking on latency, cost and tool-call accuracy
+**Architecture— single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder · two-path benchmarking on latency, cost and tool-call accuracy.**
+
+## Models and what each one does
+
+The three text models are not three roles — they are three candidates for the same slot. Exactly one runs the reasoning loop at a time; the others exist so the choice is measured rather than asserted.
+
+| Model | Role in the pipeline |
+|---|---|
+| **Claude Haiku 4.5** | Runs the reasoning loop: reads the caller's turn, decides which tool to call and with what arguments, then writes the spoken reply. Reference point for tool-call accuracy on hard input. |
+| **Amazon Nova Micro** | Same job, cheapest tier — text-only, aimed at classification and routing, which is essentially what fixed-schema tool selection is. |
+| **Amazon Nova Lite** | Same job again, one step up from Micro. The fallback when Micro misfires on ambiguous or accented phrasing. |
+| **Amazon Nova 2 Sonic** | Path B in a single model: caller audio in, reasoning and tool calling, agent audio out — collapsing the entire Transcribe → Bedrock → Polly chain into one bidirectional stream. |
+| **Amazon Transcribe** | Path A speech-in: streams caller audio to text so the text model has something to reason over. |
+| **Amazon Polly** | Path A speech-out: turns the agent's text reply into neural speech. |
+| **Amazon Translate** | Renders turns across languages for non-English callers. Being tested against letting the reasoning model translate inline. |
+
+Path A is four components you assemble and can place independently. Path B is one component you cannot take apart. That is why the latency and sovereignty results diverge: Path A pays serialization cost at every hop but each hop is yours to move, while Path B is faster with no text intermediate but is a single AWS-locked box.
 
 In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Amazon Connect telephony · Translate for multilingual callers.
 ## The argument
