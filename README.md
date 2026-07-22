@@ -1,4 +1,5 @@
 # Carrier Voice Agent
+**Network-aware, hybrid-cloud voice AI for telecom care — built on AWS Bedrock.**
 
 An agentic voice pipeline for telecom customer care. It answers a call, checks the live state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
