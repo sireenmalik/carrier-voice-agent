@@ -4,10 +4,11 @@ import json
 import os
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import Any, Iterator
 
 import boto3
-from botocore.exceptions import AccessDeniedException, ValidationException, ThrottlingException
+from botocore.exceptions import BotoCoreError, ClientError
 from fastapi import FastAPI, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -27,6 +28,14 @@ def _fresh_session_id() -> str:
 
 def _sanitize_text(text: str) -> str:
     return re.sub(r"\s+", " ", text.strip())
+
+
+class BedrockCallError(Exception):
+    """Raised when Bedrock API call fails."""
+    def __init__(self, code: str, message: str) -> None:
+        self.code = code
+        self.message = message
+        super().__init__(f"{code}: {message}")
 
 
 class FakeBedrock:
@@ -167,40 +176,31 @@ class RealBedrockClient:
     def converse(self, **kwargs: Any) -> dict[str, Any]:
         """Call Bedrock Converse API and return response in standard format."""
         try:
-            # Extract only the parameters Converse API expects
-            converse_params = {
+            # Build converse_params, omitting optional keys if absent
+            converse_params: dict[str, Any] = {
                 "modelId": kwargs.get("modelId"),
                 "messages": kwargs.get("messages", []),
-                "system": kwargs.get("system", []),
-                "toolConfig": kwargs.get("toolConfig"),
                 "inferenceConfig": {
                     "temperature": 0.0,
                     "topP": 1.0,
                     "maxTokens": kwargs.get("inferenceConfig", {}).get("maxTokens", 1024),
                 },
             }
+            
+            # Only include optional keys if provided
+            if "system" in kwargs:
+                converse_params["system"] = kwargs["system"]
+            if "toolConfig" in kwargs:
+                converse_params["toolConfig"] = kwargs["toolConfig"]
+            
             response = self.boto_client.converse(**converse_params)
             return response
-        except AccessDeniedException as e:
-            return self._error_response(f"Access denied: {str(e)}")
-        except ValidationException as e:
-            return self._error_response(f"Validation error: {str(e)}")
-        except ThrottlingException as e:
-            return self._error_response(f"Request throttled: {str(e)}")
-        except Exception as e:
-            return self._error_response(f"Bedrock error: {str(e)}")
-
-    def _error_response(self, error_message: str) -> dict[str, Any]:
-        """Return an error response in standard format."""
-        return {
-            "output": {
-                "message": {
-                    "role": "assistant",
-                    "content": [{"text": error_message}],
-                }
-            },
-            "stopReason": "end_turn",
-        }
+        except ClientError as e:
+            error_code = e.response.get("Error", {}).get("Code", "UnknownError")
+            error_message = e.response.get("Error", {}).get("Message", str(e))
+            raise BedrockCallError(error_code, error_message)
+        except BotoCoreError as e:
+            raise BedrockCallError("BotoCoreError", str(e))
 
 
 BEDROCK_MODEL_ID_TEXT = os.environ.get("BEDROCK_MODEL_ID_TEXT")
@@ -239,14 +239,24 @@ def _event_generator(session_id: str, utterance: str) -> Iterator[str]:
 
     logger.emit = collect
 
-    run_turn(
-        client=bedrock_client,
-        model_id=MODEL_ID,
-        user_utterance=utterance,
-        conversation=session["conversation"],
-        context=session["context"],
-        logger=logger,
-    )
+    try:
+        run_turn(
+            client=bedrock_client,
+            model_id=MODEL_ID,
+            user_utterance=utterance,
+            conversation=session["conversation"],
+            context=session["context"],
+            logger=logger,
+        )
+    except BedrockCallError as e:
+        events.append({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "kind": "error",
+            "payload": {
+                "code": e.code,
+                "message": e.message,
+            },
+        })
 
     for event in events:
         yield f"data: {json.dumps(event)}\n\n"
