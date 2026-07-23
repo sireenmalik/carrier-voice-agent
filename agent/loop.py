@@ -29,7 +29,7 @@ Rules you must follow:
 - Escalate to a human on any request outside these tools.
 - Speak in short, clear sentences. The caller hears your reply as speech."""
 
-MAX_ITERATIONS = 10
+MAX_ITERATIONS = 6
 DEFAULT_MAX_TOKENS = 1024
 
 

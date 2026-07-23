@@ -7,6 +7,7 @@ import uuid
 from typing import Any, Iterator
 
 import boto3
+from botocore.exceptions import AccessDeniedException, ValidationException, ThrottlingException
 from fastapi import FastAPI, Body, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
@@ -156,12 +157,59 @@ class FakeBedrock:
         }
 
 
+class RealBedrockClient:
+    """Wraps real boto3 Bedrock client with the same interface as FakeBedrock."""
+
+    def __init__(self, boto_client: Any, model_id: str) -> None:
+        self.boto_client = boto_client
+        self.model_id = model_id
+
+    def converse(self, **kwargs: Any) -> dict[str, Any]:
+        """Call Bedrock Converse API and return response in standard format."""
+        try:
+            # Extract only the parameters Converse API expects
+            converse_params = {
+                "modelId": kwargs.get("modelId"),
+                "messages": kwargs.get("messages", []),
+                "system": kwargs.get("system", []),
+                "toolConfig": kwargs.get("toolConfig"),
+                "inferenceConfig": {
+                    "temperature": 0.0,
+                    "topP": 1.0,
+                    "maxTokens": kwargs.get("inferenceConfig", {}).get("maxTokens", 1024),
+                },
+            }
+            response = self.boto_client.converse(**converse_params)
+            return response
+        except AccessDeniedException as e:
+            return self._error_response(f"Access denied: {str(e)}")
+        except ValidationException as e:
+            return self._error_response(f"Validation error: {str(e)}")
+        except ThrottlingException as e:
+            return self._error_response(f"Request throttled: {str(e)}")
+        except Exception as e:
+            return self._error_response(f"Bedrock error: {str(e)}")
+
+    def _error_response(self, error_message: str) -> dict[str, Any]:
+        """Return an error response in standard format."""
+        return {
+            "output": {
+                "message": {
+                    "role": "assistant",
+                    "content": [{"text": error_message}],
+                }
+            },
+            "stopReason": "end_turn",
+        }
+
+
 BEDROCK_MODEL_ID_TEXT = os.environ.get("BEDROCK_MODEL_ID_TEXT")
 AWS_REGION = os.environ.get("AWS_REGION")
 MODEL_ID = BEDROCK_MODEL_ID_TEXT or "fake-model"
 
-if BEDROCK_MODEL_ID_TEXT:
-    bedrock_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+if BEDROCK_MODEL_ID_TEXT and BEDROCK_MODEL_ID_TEXT.strip():
+    boto_client = boto3.client("bedrock-runtime", region_name=AWS_REGION)
+    bedrock_client = RealBedrockClient(boto_client, BEDROCK_MODEL_ID_TEXT)
 else:
     bedrock_client = FakeBedrock()
 
