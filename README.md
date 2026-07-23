@@ -4,7 +4,7 @@
 An agentic voice pipeline for telecom customer care. It answers a call, checks the live state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
-**Status: MVP**. The pipeline runs end to end; real Bedrock reasoning is being wired now. See Where it breaks for honest limits.
+**Status: MVP in progress.** The text agent runs on real Bedrock inference — Nova Micro reasoning over the live tool schema, with the validator gating writes. Voice is next.
 
 Live demo: https://carrier.sireenmalik.online/
 
@@ -164,7 +164,8 @@ Residency is enforced, not merely configured: an SCP denying `bedrock:InvokeMode
 - **Private networking is not operational sovereignty.** PrivateLink and In-Region profiles keep context off the public internet and inside one Region. They do not change the fact that inference runs transiently on AWS-operated hardware. Only self-hosting clears that bar.
 - **Newest models and strictest residency can conflict.** Some models ship as inference-profile-only, which routes within a geography rather than a single Region. Sometimes you choose between the freshest model and the tightest residency claim.
 - **Budget alerts are not caps.** AWS budgets and anomaly detection email you; they do not stop spend.
-- **Real Bedrock not yet wired.** The demo currently runs against a FakeBedrock returning canned tool calls. The plumbing is real; the reasoning is not, yet.
+- **Text only, so far.** Real Bedrock reasoning is live on the text path; the voice layers (Transcribe, Polly, Nova 2 Sonic) are not yet wired, so the latency and WER columns above are still empty.
+- **Small model, visible seams.** Nova Micro is the cheapest tier and it shows — it emits reasoning artifacts that have to be stripped before speech, and tool-argument accuracy on ambiguous input is exactly what the model comparison is there to measure.
 
 ## Setup
 
