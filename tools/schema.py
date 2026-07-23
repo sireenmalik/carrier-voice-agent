@@ -13,7 +13,8 @@ TOOLS: Final[list[dict[str, Any]]] = [
                 "Return the current health status of a cell site: healthy, "
                 "degraded, or maintenance. Call this before promising any "
                 "troubleshooting or device advice — a caller on a maintenance "
-                "site is not experiencing a device problem."
+                "site is not experiencing a device problem. The cell_site_id comes "
+                "from get_account_status; callers do not know their own site ID."
             ),
             "inputSchema": {
                 "json": {
@@ -32,7 +33,7 @@ TOOLS: Final[list[dict[str, Any]]] = [
     {
         "toolSpec": {
             "name": "get_account_status",
-            "description": "Return plan and current balance for a customer account.",
+            "description": "Return plan, current balance, and the cell site currently serving a customer account. Use this to obtain the cell_site_id needed for get_site_health.",
             "inputSchema": {
                 "json": {
                     "type": "object",

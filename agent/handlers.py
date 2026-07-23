@@ -42,6 +42,7 @@ def _handle_get_account_status(args: dict[str, Any], context: dict[str, Any], lo
             "account_id": account_id,
             "plan": account["plan"],
             "balance": account["balance"],
+            "cell_site_id": account["cell_site_id"],
         },
     }
 
