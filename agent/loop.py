@@ -10,6 +10,7 @@ frontend replays that event stream — do not add prose logs here."""
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from typing import Any, Callable, Protocol
@@ -91,8 +92,13 @@ def run_turn(
 
         if response.get("stopReason") != "tool_use":
             reply = _extract_text(assistant_message)
-            logger.log("transcript", {"role": "assistant", "text": reply})
-            return reply
+            cleaned_reply = _strip_thinking(reply)
+            logger.log("transcript", {
+                "role": "assistant",
+                "text": cleaned_reply,
+                "raw_text": reply,
+            })
+            return cleaned_reply
 
         tool_result_blocks = []
         for block in assistant_message.get("content", []):
@@ -142,3 +148,17 @@ def _extract_text(assistant_message: dict[str, Any]) -> str:
         if "text" in block
     ]
     return "\n".join(parts).strip()
+
+
+def _strip_thinking(text: str) -> str:
+    """Remove <thinking>...</thinking> blocks (including unclosed ones) and collapse whitespace."""
+    # Remove thinking blocks: handle both closed and unclosed tags
+    # Use DOTALL to match across newlines
+    cleaned = re.sub(r"<thinking>.*?</thinking>", "", text, flags=re.DOTALL)
+    # Also handle unclosed thinking tags at the end
+    cleaned = re.sub(r"<thinking>.*$", "", cleaned, flags=re.DOTALL)
+    # Collapse multiple whitespace into single spaces, preserving single newlines semantically
+    cleaned = re.sub(r" +", " ", cleaned)
+    # Strip leading/trailing whitespace
+    cleaned = cleaned.strip()
+    return cleaned

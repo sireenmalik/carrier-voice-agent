@@ -170,3 +170,83 @@ def test_every_logged_event_is_json_serializable():
 
     for event in logger.events:
         json.dumps(event)
+
+
+def test_thinking_blocks_stripped_from_transcript():
+    """Verify that <thinking> blocks are removed from assistant text in transcript events."""
+    account_id, site_id = _account_and_site_on("healthy")
+
+    # Simulate Bedrock response with thinking block
+    raw_response_text = (
+        "<thinking>\n"
+        "The user is asking about site health. I should call get_site_health "
+        "to check the status.\n"
+        "</thinking>\n"
+        "Your site is healthy. Everything is operating normally."
+    )
+
+    client = FakeBedrock([
+        _tool_use_response("tu-1", "get_site_health", {"cell_site_id": site_id}),
+        _text_response(raw_response_text),
+    ])
+    logger = StepLogger()
+    reply = run_turn(
+        client=client,
+        model_id="test-model",
+        user_utterance="is my site healthy?",
+        conversation=[],
+        context={"cell_site_id": site_id, "account_id": account_id},
+        logger=logger,
+    )
+
+    # Verify the returned text is clean (no thinking blocks)
+    assert "<thinking>" not in reply
+    assert "</thinking>" not in reply
+    assert "Everything is operating normally" in reply
+
+    # Find the final transcript event (assistant's response)
+    final_transcript_events = [
+        e for e in logger.events
+        if e["kind"] == "transcript" and e["payload"]["role"] == "assistant"
+    ]
+    assert len(final_transcript_events) == 1
+
+    transcript = final_transcript_events[0]["payload"]
+    # Verify clean text is in the "text" field
+    assert "<thinking>" not in transcript["text"]
+    assert "</thinking>" not in transcript["text"]
+    assert "Everything is operating normally" in transcript["text"]
+
+    # Verify raw text is preserved in "raw_text" field
+    assert "<thinking>" in transcript["raw_text"]
+    assert "</thinking>" in transcript["raw_text"]
+    assert "Everything is operating normally" in transcript["raw_text"]
+
+
+def test_unclosed_thinking_block_stripped():
+    """Verify that unclosed <thinking> blocks are also removed."""
+    account_id, site_id = _account_and_site_on("healthy")
+
+    # Simulate response with unclosed thinking block
+    raw_response_text = (
+        "<thinking>\n"
+        "The user asked about their site. Let me respond that "
+    )
+
+    client = FakeBedrock([
+        _text_response(raw_response_text),
+    ])
+    logger = StepLogger()
+    reply = run_turn(
+        client=client,
+        model_id="test-model",
+        user_utterance="is my site healthy?",
+        conversation=[],
+        context={"cell_site_id": site_id, "account_id": account_id},
+        logger=logger,
+    )
+
+    # Verify the returned text is empty or minimal (all thinking was removed)
+    assert "<thinking>" not in reply
+    assert "Let me respond" not in reply
+
