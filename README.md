@@ -49,11 +49,11 @@ That separation is what makes the model a swappable backend. It is also why the 
 
 Two captures from the live demo showing the core claim in action. The demo's left panel has one-click **example prompts** — the outage, degraded-tower, blocked-write, and maintenance-window flows — that fill the turn box so you can reproduce each without typing.
 
-![Degraded tower: account resolved to its serving cell site, then site health](docs/screenshots/degraded-site.png)
+![Degraded tower: account resolved to its serving cell site, then site health](docs/degraded-site.png)
 
 *Chained tool calls — account → serving cell site → site health — so the agent knows the tower is degraded before it answers. Reproducible via the "Degraded tower" example prompt.*
 
-![Validator rejection: booking blocked by policy](docs/screenshots/validator-reject.png)
+![Validator rejection: booking blocked by policy](docs/validator-reject.png)
 
 *A write proposal blocked by the validator, with the reason surfaced to the caller — reproducible via the "Blocked write" example prompt.*
 
