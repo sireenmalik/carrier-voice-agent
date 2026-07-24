@@ -151,6 +151,44 @@ def test_booking_on_maintenance_site_is_rejected_with_reason_surfaced_back():
     assert any(word in reply.lower() for word in ("sorry", "can't", "cannot", "maintenance"))
 
 
+def test_rejected_write_is_rejected_in_sse_but_error_in_bedrock_tool_result():
+    """A validator-declined write surfaces as status="rejected" in the SSE event
+    the frontend renders, but the toolResult block sent back to Bedrock must
+    collapse to status="error" — Converse accepts only success|error."""
+    maintenance_account, _ = _account_and_site_on("maintenance")
+
+    client = FakeBedrock([
+        _tool_use_response("tu-1", "book_appointment", {
+            "account_id": maintenance_account,
+            "slot": "2026-07-20T10:00:00",
+        }),
+        _text_response("I can't book that — your local cell site is in maintenance."),
+    ])
+    logger = StepLogger()
+    run_turn(
+        client=client,
+        model_id="test-model",
+        user_utterance="book me a repair tomorrow at 10am",
+        conversation=[],
+        context={},
+        logger=logger,
+    )
+
+    # SSE event the frontend renders keeps the nuanced "rejected" status.
+    tool_result_events = [e for e in logger.events if e["kind"] == "tool_result"]
+    assert len(tool_result_events) == 1
+    assert tool_result_events[0]["payload"]["status"] == "rejected"
+
+    # The block fed back to Bedrock collapses to "error" (Converse-valid),
+    # while the reason stays in content for the model to explain.
+    tool_result_msg = client.calls[1]["messages"][-1]
+    assert tool_result_msg["role"] == "user"
+    tool_result_block = tool_result_msg["content"][0]["toolResult"]
+    assert tool_result_block["status"] == "error"
+    assert tool_result_block["content"][0]["json"]["booked"] is False
+    assert "maintenance" in tool_result_block["content"][0]["json"]["reason"].lower()
+
+
 def test_every_logged_event_is_json_serializable():
     account_id, site_id = _account_and_site_on("healthy")
 

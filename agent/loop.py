@@ -130,7 +130,7 @@ def run_turn(
                 "toolResult": {
                     "toolUseId": tool_use["toolUseId"],
                     "content": [{"json": result["content"]}],
-                    "status": result["status"],
+                    "status": _bedrock_tool_status(result["status"]),
                 }
             })
 
@@ -139,6 +139,17 @@ def run_turn(
     raise RuntimeError(
         f"tool-use loop did not converge within {max_iterations} iterations"
     )
+
+
+def _bedrock_tool_status(status: str) -> str:
+    """Map an internal handler status onto a Bedrock Converse `toolResult.status`.
+
+    The Converse API accepts only "success" or "error". Our handlers also emit
+    "rejected" for policy-declined writes; that nuance is preserved in the SSE
+    `tool_result` event the frontend renders, but the block sent back to the
+    model must collapse to "error". The rejection reason stays in `content`, so
+    the model can still read it and explain the denial to the caller."""
+    return "success" if status == "success" else "error"
 
 
 def _extract_text(assistant_message: dict[str, Any]) -> str:
