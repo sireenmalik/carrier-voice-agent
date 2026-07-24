@@ -239,6 +239,12 @@ def _event_generator(session_id: str, utterance: str) -> Iterator[str]:
 
     logger.emit = collect
 
+    backend = "real" if isinstance(bedrock_client, RealBedrockClient) else "fake"
+    logger.log("server_status", {
+        "backend": backend,
+        "model_id": getattr(bedrock_client, "model_id", "FakeBedrock"),
+    })
+
     try:
         run_turn(
             client=bedrock_client,

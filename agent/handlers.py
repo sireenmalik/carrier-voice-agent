@@ -67,7 +67,7 @@ def _handle_book_appointment(args: dict[str, Any], context: dict[str, Any], logg
         "reason": reason,
     })
     if not ok:
-        return {"status": "success", "content": {"booked": False, "reason": reason}}
+        return {"status": "rejected", "content": {"booked": False, "reason": reason}}
     appointment = appointments.book(args["account_id"], args["slot"])
     return {
         "status": "success",

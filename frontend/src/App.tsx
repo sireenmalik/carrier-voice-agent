@@ -14,6 +14,7 @@ const eventMeta: Record<
   tool_result: { icon: '🔧', label: 'Tool Result', classes: 'bg-amber-100/80 text-amber-900' },
   validator_decision: { icon: '⚠️', label: 'Validator', classes: 'bg-red-100/80 text-red-900' },
   transcript: { icon: '💬', label: 'Transcript', classes: 'bg-emerald-100/80 text-emerald-900' },
+  server_status: { icon: '🔎', label: 'Backend', classes: 'bg-slate-100/80 text-slate-900' },
 };
 
 function makeSessionId() {
@@ -27,6 +28,7 @@ function App() {
   const sourceRef = useRef<EventSource | null>(null);
   const eventsContainerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState('Ready');
+  const [backendInfo, setBackendInfo] = useState<{ backend: string; modelId?: string } | null>(null);
 
   useEffect(() => {
     return () => {
@@ -56,6 +58,7 @@ function App() {
     setEvents([]);
     setUtterance('');
     setStatus('Ready');
+    setBackendInfo(null);
   };
 
   const startTurn = () => {
@@ -73,7 +76,7 @@ function App() {
       },
     ]);
 
-    const eventSource = new EventSource(
+      const eventSource = new EventSource(
       `/turn?session_id=${encodeURIComponent(sessionId)}&utterance=${encodeURIComponent(utterance)}`
     );
     sourceRef.current = eventSource;
@@ -82,18 +85,24 @@ function App() {
     eventSource.onmessage = (event) => {
       try {
         const payload = JSON.parse(event.data) as EventPayload;
-        setEvents((prev) => [...prev, payload]);
-      } catch {
-        setEvents((prev) => [
-          ...prev,
-          {
-            ts: new Date().toISOString(),
-            kind: 'error',
-            payload: { message: event.data },
-          },
-        ]);
-      }
-    };
+          if (payload.kind === 'server_status') {
+            setBackendInfo({
+              backend: payload.payload.backend as string,
+              modelId: payload.payload.model_id as string,
+            });
+          }
+          setEvents((prev) => [...prev, payload]);
+        } catch {
+          setEvents((prev) => [
+            ...prev,
+            {
+              ts: new Date().toISOString(),
+              kind: 'error',
+              payload: { message: event.data },
+            },
+          ]);
+        }
+      };
 
     eventSource.onerror = () => {
       setStatus('Complete');
@@ -159,7 +168,12 @@ function App() {
                 placeholder="Ask the agent about an outage, account, appointment, or escalation."
               />
               <p className="text-xs text-slate-400">
-                FakeBedrock returns canned tool calls; ZIPs and account IDs in canned responses may not match what you typed. Set BEDROCK_MODEL_ID_TEXT to use real Bedrock.
+                {backendInfo?.backend === 'fake' ?
+                  'FakeBedrock returns canned tool calls; ZIPs and account IDs in canned responses may not match what you typed. Set BEDROCK_MODEL_ID_TEXT to use real Bedrock.' :
+                  backendInfo?.backend === 'real' ?
+                    `Real Bedrock active: ${backendInfo.modelId}` :
+                    ''
+                }
               </p>
             </div>
 
