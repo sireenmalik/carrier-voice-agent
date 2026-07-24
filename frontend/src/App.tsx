@@ -169,7 +169,7 @@ function App() {
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 p-6 sm:p-10">
         <header className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-900/10">
           <h1 className="text-3xl font-bold text-white">Carrier Voice Agent</h1>
-          <p className="mt-2 text-slate-400">A network-aware care agent on AWS Bedrock. It checks live cell-site health before it answers, and gates every write to a customer record behind a deterministic validator.</p>
+          <p className="mt-2 text-slate-400">A network-aware care agent on Amazon Bedrock — Nova Micro reasoning over a synthetic network simulator. It checks cell-site health before it answers, and gates every write to a customer record behind a deterministic validator.</p>
         </header>
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[360px_1fr]">

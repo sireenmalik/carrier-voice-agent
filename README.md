@@ -1,7 +1,7 @@
 # Carrier Voice Agent
 **Network-aware, hybrid-cloud voice AI for telecom care — built on AWS Bedrock.**
 
-An agentic voice pipeline for telecom customer care. It answers a call, checks the live state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
+An agentic voice pipeline for telecom customer care. It answers a call, checks the state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
 **Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the live tool schema, with the validator gating writes. Voice is the natural next step but is not built.
@@ -35,7 +35,7 @@ In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to
 
 Every agentic voice demo in telecom care apologizes for an outage it cannot see. A care agent that answers "I understand you're frustrated, let me help you troubleshoot your device" while the caller's tower is in maintenance is not being helpful — it is being wrong at scale. The network is the product. A care response that ignores the state of the network is the wrong response.
 
-This repo is an argument in code: the reasoning loop must consult live network health before it speaks. Cell site status is a first-class input to the model's tool set, not an afterthought handed off to a separate ticket queue. Everything else here — telephony, transcription, TTS, translation — is plumbing around that one commitment.
+This repo is an argument in code: the reasoning loop must consult network health before it speaks. Cell site status is a first-class input to the model's tool set, not an afterthought handed off to a separate ticket queue. Everything else here — telephony, transcription, TTS, translation — is plumbing around that one commitment.
 
 ## What it does
 
