@@ -21,6 +21,29 @@ function makeSessionId() {
   return Math.random().toString(36).slice(2, 10);
 }
 
+const examplePrompts: { label: string; text: string; watch: string }[] = [
+  {
+    label: 'Network outage',
+    text: "my internet's been down all morning, I'm at 94103",
+    watch: 'Checks for outages before blaming the device',
+  },
+  {
+    label: 'Degraded tower',
+    text: 'my internet is down, my account is ACC-1007',
+    watch: 'Account → serving cell site → site health, chained',
+  },
+  {
+    label: 'Blocked write',
+    text: 'Book me a technician appointment for 8pm tomorrow. My account is ACC-1001',
+    watch: 'Validator rejects: outside business hours',
+  },
+  {
+    label: 'Maintenance window',
+    text: 'I need to book a technician appointment. My account is ACC-1009',
+    watch: 'Booking refused; site under maintenance',
+  },
+];
+
 function App() {
   const [sessionId, setSessionId] = useState(() => makeSessionId());
   const [utterance, setUtterance] = useState('');
@@ -146,7 +169,7 @@ function App() {
       <div className="mx-auto flex min-h-screen max-w-7xl flex-col gap-6 p-6 sm:p-10">
         <header className="rounded-3xl border border-slate-800 bg-slate-900/80 p-6 shadow-xl shadow-slate-900/10">
           <h1 className="text-3xl font-bold text-white">Carrier Voice Agent</h1>
-          <p className="mt-2 text-slate-400">Live developer demo with SSE event logging and in-memory session state.</p>
+          <p className="mt-2 text-slate-400">A network-aware care agent on AWS Bedrock. It checks live cell-site health before it answers, and gates every write to a customer record behind a deterministic validator.</p>
         </header>
 
         <div className="grid flex-1 gap-6 lg:grid-cols-[360px_1fr]">
@@ -177,6 +200,23 @@ function App() {
               {backendText ? (
                 <p className="text-xs text-slate-400">{backendText}</p>
               ) : null}
+            </div>
+
+            <div className="mt-6">
+              <p className="text-sm font-semibold text-slate-300">Try these</p>
+              <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                {examplePrompts.map((example) => (
+                  <button
+                    key={example.label}
+                    type="button"
+                    onClick={() => setUtterance(example.text)}
+                    className="flex flex-col gap-1 rounded-2xl border border-slate-700 bg-slate-950/80 px-4 py-3 text-left transition hover:border-cyan-500 hover:bg-slate-900"
+                  >
+                    <span className="text-sm font-semibold text-slate-100">{example.label}</span>
+                    <span className="text-xs text-slate-500">{example.watch}</span>
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

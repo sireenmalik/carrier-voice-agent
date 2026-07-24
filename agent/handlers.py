@@ -1,10 +1,11 @@
 """Tool-name → simulator/validator dispatch.
 
-Each handler returns {"status": "success" | "error", "content": <json-dict>}.
-The loop wraps this into a Bedrock `toolResult` block and feeds it back.
+Each handler returns {"status": "success" | "rejected" | "error",
+"content": <json-dict>}. The loop wraps this into a Bedrock `toolResult` block
+and feeds it back.
 
-Policy rejections on writes return status="success" with `booked: False` and a
-reason string — the call to the tool succeeded, the write was declined. The
+Policy rejections on writes return status="rejected" with `booked: False` and a
+reason string — the call to the tool succeeded, but the write was declined. The
 model reads the payload and relays the reason to the caller."""
 
 from __future__ import annotations
