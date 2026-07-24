@@ -4,15 +4,15 @@
 An agentic voice pipeline for telecom customer care. It answers a call, checks the state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
-**Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the live tool schema, with the validator gating writes. Voice is the natural next step but is not built.
+**Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the tool schema, with the validator gating writes. Voice is the natural next step but is not built.
 
 Live demo: https://carrier.sireenmalik.online/
 
-**Application **— Python 3.11 · FastAPI · Server-Sent Events · React + TypeScript · Vite · nginx · systemd · GitHub Actions CI/CD · Let's Encrypt
+**Application** — Python 3.12 · FastAPI · Server-Sent Events · React + TypeScript · Vite · nginx · systemd · GitHub Actions CI/CD · Let's Encrypt
 
-**AWS — Bedrock (Converse API, tool use) · IAM · KMS · CloudTrail · Service Control Policies · Budgets · Cost Anomaly Detection · PrivateLink / VPC endpoints**
+**AWS** — Bedrock (Converse API, tool use) · IAM least-privilege service identity · Budgets · Cost Anomaly Detection · cross-region inference profiles
 
-**Architecture— single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder · two-path benchmarking on latency, cost and tool-call accuracy.**
+**Architecture** — single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder (KMS, CloudTrail, Service Control Policies, PrivateLink / VPC endpoints) · two-path design comparison on portability and failure modes.
 
 ## Models and what each one does
 
@@ -28,7 +28,7 @@ The three text models are not three roles — they are three candidates for the 
 | **Amazon Polly** | Path A speech-out: turns the agent's text reply into neural speech. |
 | **Amazon Translate** | Renders turns across languages for non-English callers. Being tested against letting the reasoning model translate inline. |
 
-Path A is four components you assemble and can place independently. Path B is one component you cannot take apart. That is why the latency and sovereignty results diverge: Path A pays serialization cost at every hop but each hop is yours to move, while Path B is faster with no text intermediate but is a single AWS-locked box.
+Path A is four components you assemble and can place independently. Path B is one component you cannot take apart. That is why their latency and sovereignty tradeoffs should diverge: Path A pays serialization cost at every hop but each hop is yours to move, while Path B is faster with no text intermediate but is a single AWS-locked box.
 
 In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Translate for multilingual callers.
 ## The argument
@@ -156,7 +156,7 @@ Residency is enforced, not merely configured: an SCP denying `bedrock:InvokeMode
 
 > This section is intentionally last.
 
-Requires: an AWS account with Bedrock model access in `us-east-1` (and Transcribe, Polly, Translate for the voice paths). Node 20 for the frontend, Python 3.11 for the validator and simulator.
+Requires: an AWS account with Bedrock model access in `us-west-2` (and Transcribe, Polly, Translate for the voice paths). Node 20 for the frontend, Python 3.12 for the validator and simulator.
 
 ```bash
 cp .env.example .env  # AWS region, Bedrock model ids
@@ -166,6 +166,8 @@ cd frontend && npm install && npm run dev
 ```
 
 `BEDROCK_MODEL_ID_TEXT` must be the **inference profile ID** (the `us.`-prefixed form), not the bare model ID — newer models reject on-demand invocation by base ID. Credentials come from environment variables only; nothing sensitive belongs in this repo.
+
+Colocate the app tier and the model Region — this deployment runs the droplet in SFO against us-west-2.
 
 Set an AWS budget alert at $20 and enable Cost Anomaly Detection before provisioning anything.
 
