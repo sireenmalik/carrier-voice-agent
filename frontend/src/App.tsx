@@ -29,6 +29,13 @@ function App() {
   const eventsContainerRef = useRef<HTMLDivElement | null>(null);
   const [status, setStatus] = useState('Ready');
   const [backendInfo, setBackendInfo] = useState<{ backend: string; modelId?: string } | null>(null);
+  const backendText = backendInfo
+    ? backendInfo.backend.toLowerCase() === 'fake'
+      ? 'FakeBedrock returns canned tool calls; ZIPs and account IDs in canned responses may not match what you typed. Set BEDROCK_MODEL_ID_TEXT to use real Bedrock.'
+      : backendInfo.backend.toLowerCase() === 'real'
+      ? `Real Bedrock active: ${backendInfo.modelId ?? 'unknown model'}`
+      : ''
+    : '';
 
   useEffect(() => {
     return () => {
@@ -167,14 +174,9 @@ function App() {
                 className="w-full rounded-3xl border border-slate-700 bg-slate-950/90 px-4 py-3 text-sm text-slate-100 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-500/20"
                 placeholder="Ask the agent about an outage, account, appointment, or escalation."
               />
-              <p className="text-xs text-slate-400">
-                {backendInfo?.backend === 'fake' ?
-                  'FakeBedrock returns canned tool calls; ZIPs and account IDs in canned responses may not match what you typed. Set BEDROCK_MODEL_ID_TEXT to use real Bedrock.' :
-                  backendInfo?.backend === 'real' ?
-                    `Real Bedrock active: ${backendInfo.modelId}` :
-                    ''
-                }
-              </p>
+              {backendText ? (
+                <p className="text-xs text-slate-400">{backendText}</p>
+              ) : null}
             </div>
 
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
