@@ -4,7 +4,7 @@
 An agentic voice pipeline for telecom customer care. It answers a call, checks the live state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
-**Status: MVP in progress.** The text agent runs on real Bedrock inference — Nova Micro reasoning over the live tool schema, with the validator gating writes. Voice is next.
+**Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the live tool schema, with the validator gating writes. Voice is the natural next step but is not built.
 
 Live demo: https://carrier.sireenmalik.online/
 
@@ -20,9 +20,9 @@ The three text models are not three roles — they are three candidates for the 
 
 | Model | Role in the pipeline |
 |---|---|
-| **Claude Haiku 4.5** | Runs the reasoning loop: reads the caller's turn, decides which tool to call and with what arguments, then writes the spoken reply. Reference point for tool-call accuracy on hard input. |
-| **Amazon Nova Micro** | Same job, cheapest tier — text-only, aimed at classification and routing, which is essentially what fixed-schema tool selection is. |
-| **Amazon Nova Lite** | Same job again, one step up from Micro. The fallback when Micro misfires on ambiguous or accented phrasing. |
+| **Amazon Nova Micro** | Runs the reasoning loop today: reads the caller's turn, decides which tool to call and with what arguments, then writes the spoken reply. Cheapest tier, text-only — and fixed-schema tool selection is essentially the classification-and-routing job it is built for. |
+| **Amazon Nova Lite** | Same job, one step up from Micro — the step-up candidate if Micro misfires on ambiguous or accented phrasing. |
+| **Claude Haiku 4.5** | Same job again, and the reference point for tool-call accuracy on hard, accented input — the step-up candidate when accuracy outweighs cost. |
 | **Amazon Nova 2 Sonic** | Path B in a single model: caller audio in, reasoning and tool calling, agent audio out — collapsing the entire Transcribe → Bedrock → Polly chain into one bidirectional stream. |
 | **Amazon Transcribe** | Path A speech-in: streams caller audio to text so the text model has something to reason over. |
 | **Amazon Polly** | Path A speech-out: turns the agent's text reply into neural speech. |
@@ -30,7 +30,7 @@ The three text models are not three roles — they are three candidates for the 
 
 Path A is four components you assemble and can place independently. Path B is one component you cannot take apart. That is why the latency and sovereignty results diverge: Path A pays serialization cost at every hop but each hop is yours to move, while Path B is faster with no text intermediate but is a single AWS-locked box.
 
-In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Amazon Connect telephony · Translate for multilingual callers.
+In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Translate for multilingual callers.
 ## The argument
 
 Every agentic voice demo in telecom care apologizes for an outage it cannot see. A care agent that answers "I understand you're frustrated, let me help you troubleshoot your device" while the caller's tower is in maintenance is not being helpful — it is being wrong at scale. The network is the product. A care response that ignores the state of the network is the wrong response.
@@ -47,15 +47,15 @@ That separation is what makes the model a swappable backend. It is also why the 
 
 ## Seeing the argument
 
-Two captures from the live demo showing the core claim in action.
+Two captures from the live demo showing the core claim in action. The demo's left panel has one-click **example prompts** — the outage, degraded-tower, blocked-write, and maintenance-window flows — that fill the turn box so you can reproduce each without typing.
 
-![Happy path: site health check succeeds](docs/screenshots/happy-path.png)
+![Degraded tower: account resolved to its serving cell site, then site health](docs/screenshots/degraded-site.png)
 
-*Successful site-health tool call — the agent checks the network before it answers.*
+*Chained tool calls — account → serving cell site → site health — so the agent knows the tower is degraded before it answers. Reproducible via the "Degraded tower" example prompt.*
 
 ![Validator rejection: booking blocked by policy](docs/screenshots/validator-reject.png)
 
-*A write proposal blocked by the validator, with the reason surfaced to the caller.*
+*A write proposal blocked by the validator, with the reason surfaced to the caller — reproducible via the "Blocked write" example prompt.*
 
 ## The loop and the gate
 
@@ -111,30 +111,15 @@ Tool schema is fixed. Temperature 0 for tool-calling. Network data is a syntheti
 
 Both share the same tool schema and the same validator at the same dispatch boundary — that is what makes the comparison honest rather than two unrelated demos.
 
-| Metric                     | Path A (cascaded) | Path B (S2S) |
-|----------------------------|-------------------|--------------|
-| p50 turn latency           | TBD               | TBD          |
-| p95 turn latency           | TBD               | TBD          |
-| Cost per 3-min call        | TBD               | TBD          |
-| WER on accented EN         | TBD               | TBD          |
-| Tool-call accuracy         | TBD               | TBD          |
-| **Sovereignty portability**| **High**          | **Low**      |
+The cascaded path assembles Transcribe, Bedrock and Polly, and each hop can be placed independently. The speech-to-speech path is one model that cannot be taken apart, which makes it faster but far less portable.
 
-The third axis is the one most comparisons miss. The text path is portable: swap in a self-hosted open-weight model behind the same tool schema and the validator never notices. The speech-to-speech path is AWS-locked, available in few Regions, and cannot be self-hosted — so in a jurisdiction without a supporting Region, Path B cannot be localized at all.
-
-Numbers land in this table when the MVP is running. The comparison is the point of the repo. A Principal builds one and knows why, not both and shrugs.
+Portability is the axis most comparisons miss. The text path is portable: swap in a self-hosted open-weight model behind the same tool schema and the validator never notices. The speech-to-speech path is AWS-locked, available in few Regions, and cannot be self-hosted — so in a jurisdiction without a supporting Region, Path B cannot be localized at all.
 
 ## Model selection
 
-Model choice is measured here, not asserted. Because the model is a swappable backend, swapping costs nothing but a config change.
+Because the model is a swappable backend, swapping costs nothing but a config change. **Nova Micro runs the loop today** — the cheapest tier, and temp-0 tool calling against a fixed schema is an easy task that does not need a frontier model. **Nova Lite** and **Claude Haiku 4.5** are the step-up candidates if tool-call accuracy on ambiguous or accented input proves insufficient.
 
-| Candidate         | Why it is in the running                                    |
-|-------------------|-------------------------------------------------------------|
-| Amazon Nova Micro | Cheapest credible option; classification and routing focus   |
-| Amazon Nova Lite  | One step up when Micro misfires on ambiguous input           |
-| Claude Haiku 4.5  | Reference for tool-call accuracy on hard, accented input     |
-
-Temp-0 tool calling against a fixed schema is an easy task and does not need a frontier model. The validator backstops the *write* path regardless of which model proposed the call — but it does not govern reads, routing, or escalation, so model quality still matters where the gate does not reach. Results go in the table above.
+The validator backstops the *write* path regardless of which model proposed the call — but it does not govern reads, routing, or escalation, so model quality still matters where the gate does not reach.
 
 ## Where it runs
 
@@ -164,14 +149,14 @@ Residency is enforced, not merely configured: an SCP denying `bedrock:InvokeMode
 - **Private networking is not operational sovereignty.** PrivateLink and In-Region profiles keep context off the public internet and inside one Region. They do not change the fact that inference runs transiently on AWS-operated hardware. Only self-hosting clears that bar.
 - **Newest models and strictest residency can conflict.** Some models ship as inference-profile-only, which routes within a geography rather than a single Region. Sometimes you choose between the freshest model and the tightest residency claim.
 - **Budget alerts are not caps.** AWS budgets and anomaly detection email you; they do not stop spend.
-- **Text only, so far.** Real Bedrock reasoning is live on the text path; the voice layers (Transcribe, Polly, Nova 2 Sonic) are not yet wired, so the latency and WER columns above are still empty.
-- **Small model, visible seams.** Nova Micro is the cheapest tier and it shows — it emits reasoning artifacts that have to be stripped before speech, and tool-argument accuracy on ambiguous input is exactly what the model comparison is there to measure.
+- **Text only, so far.** Real Bedrock reasoning is live on the text path; the voice layers (Transcribe, Polly, Nova 2 Sonic) are not yet wired.
+- **Small model, visible seams.** Nova Micro is the cheapest tier and it shows — it emits reasoning artifacts that have to be stripped before speech, and tool-argument accuracy on ambiguous input is exactly why Nova Lite and Claude Haiku 4.5 stand ready as step-ups.
 
 ## Setup
 
 > This section is intentionally last.
 
-Requires: an AWS account with Bedrock model access in `us-east-1` (and Transcribe, Polly, Translate for the voice paths). Node 20 for the frontend, Python 3.11 for the validator and simulator. Amazon Connect is optional — both voice paths run from a browser mic without it.
+Requires: an AWS account with Bedrock model access in `us-east-1` (and Transcribe, Polly, Translate for the voice paths). Node 20 for the frontend, Python 3.11 for the validator and simulator.
 
 ```bash
 cp .env.example .env  # AWS region, Bedrock model ids
@@ -182,7 +167,7 @@ cd frontend && npm install && npm run dev
 
 `BEDROCK_MODEL_ID_TEXT` must be the **inference profile ID** (the `us.`-prefixed form), not the bare model ID — newer models reject on-demand invocation by base ID. Credentials come from environment variables only; nothing sensitive belongs in this repo.
 
-Set an AWS budget alert at $20 and enable Cost Anomaly Detection before provisioning anything. If you do provision a Connect number, claim a DID rather than toll-free and release it as soon as the demo is recorded.
+Set an AWS budget alert at $20 and enable Cost Anomaly Detection before provisioning anything.
 
 ## Data and scope
 
