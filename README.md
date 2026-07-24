@@ -4,7 +4,7 @@
 An agentic voice pipeline for telecom customer care. It answers a call, checks the state of the network before it responds, and speaks back — gating anything that touches a customer record behind a deterministic validator.
 
 
-**Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the tool schema, with the validator gating writes. Voice is the natural next step but is not built.
+**Status: the text agent works.** It runs on real Bedrock inference — Nova Micro reasoning over the tool schema, with the validator gating writes. Voice is not built — planned next.
 
 Live demo: https://carrier.sireenmalik.online/
 
@@ -12,25 +12,8 @@ Live demo: https://carrier.sireenmalik.online/
 
 **AWS** — Bedrock (Converse API, tool use) · IAM least-privilege service identity · Budgets · Cost Anomaly Detection · cross-region inference profiles
 
-**Architecture** — single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · confidence routing to human escalation · data residency and sovereignty ladder (KMS, CloudTrail, Service Control Policies, PrivateLink / VPC endpoints) · two-path design comparison on portability and failure modes.
+**Architecture** — single tool-using agent loop · deterministic policy-enforcement gate on writes · Return-of-Control pattern · model-invoked escalation to a human · data residency and sovereignty ladder (KMS, CloudTrail, Service Control Policies, PrivateLink / VPC endpoints) · two-path design comparison on portability and failure modes.
 
-## Models and what each one does
-
-The three text models are not three roles — they are three candidates for the same slot. Exactly one runs the reasoning loop at a time; the others exist so the choice is measured rather than asserted.
-
-| Model | Role in the pipeline |
-|---|---|
-| **Amazon Nova Micro** | Runs the reasoning loop today: reads the caller's turn, decides which tool to call and with what arguments, then writes the spoken reply. Cheapest tier, text-only — and fixed-schema tool selection is essentially the classification-and-routing job it is built for. |
-| **Amazon Nova Lite** | Same job, one step up from Micro — the step-up candidate if Micro misfires on ambiguous or accented phrasing. |
-| **Claude Haiku 4.5** | Same job again, and the reference point for tool-call accuracy on hard, accented input — the step-up candidate when accuracy outweighs cost. |
-| **Amazon Nova 2 Sonic** | Path B in a single model: caller audio in, reasoning and tool calling, agent audio out — collapsing the entire Transcribe → Bedrock → Polly chain into one bidirectional stream. |
-| **Amazon Transcribe** | Path A speech-in: streams caller audio to text so the text model has something to reason over. |
-| **Amazon Polly** | Path A speech-out: turns the agent's text reply into neural speech. |
-| **Amazon Translate** | Renders turns across languages for non-English callers. Being tested against letting the reasoning model translate inline. |
-
-Path A is four components you assemble and can place independently. Path B is one component you cannot take apart. That is why their latency and sovereignty tradeoffs should diverge: Path A pays serialization cost at every hop but each hop is yours to move, while Path B is faster with no text intermediate but is a single AWS-locked box.
-
-In progress: Transcribe and Polly voice layer (Path A) · Nova 2 Sonic speech-to-speech (Path B) · Translate for multilingual callers.
 ## The argument
 
 Every agentic voice demo in telecom care apologizes for an outage it cannot see. A care agent that answers "I understand you're frustrated, let me help you troubleshoot your device" while the caller's tower is in maintenance is not being helpful — it is being wrong at scale. The network is the product. A care response that ignores the state of the network is the wrong response.
@@ -96,10 +79,10 @@ What makes the system auditable is that the audit boundary sits where consequenc
 ## Tools the agent can call
 
 - `get_site_health(cell_site_id)` — `degraded | healthy | maintenance`
-- `get_account_status(account_id)` — plan, balance
+- `get_account_status(account_id)` — plan, balance, serving cell site — this is how the agent obtains the `cell_site_id` for `get_site_health`
 - `lookup_outage(zip_code)` — active incidents
 - `book_appointment(account_id, slot)` — **write path, gated by validator**
-- `escalate_to_human(reason)` — routes out on low confidence
+- `escalate_to_human(reason)` — model-invoked handoff to a human for requests outside the other tools
 
 Tool schema is fixed. Temperature 0 for tool-calling. Network data is a synthetic simulator (twenty sites, deterministic seed) — the point is the pattern, not the data.
 
@@ -115,11 +98,23 @@ The cascaded path assembles Transcribe, Bedrock and Polly, and each hop can be p
 
 Portability is the axis most comparisons miss. The text path is portable: swap in a self-hosted open-weight model behind the same tool schema and the validator never notices. The speech-to-speech path is AWS-locked, available in few Regions, and cannot be self-hosted — so in a jurisdiction without a supporting Region, Path B cannot be localized at all.
 
-## Model selection
+## The models
 
-Because the model is a swappable backend, swapping costs nothing but a config change. **Nova Micro runs the loop today** — the cheapest tier, and temp-0 tool calling against a fixed schema is an easy task that does not need a frontier model. **Nova Lite** and **Claude Haiku 4.5** are the step-up candidates if tool-call accuracy on ambiguous or accented input proves insufficient.
+Three text models are candidates for one slot — the reasoning loop — and exactly one runs it at a time; the others exist so the choice is measured rather than asserted. The remaining entries are the speech and translation services the two voice paths assemble around that slot.
 
-The validator backstops the *write* path regardless of which model proposed the call — but it does not govern reads, routing, or escalation, so model quality still matters where the gate does not reach.
+| Model | Role in the pipeline |
+|---|---|
+| **Amazon Nova Micro** | Runs the reasoning loop today: reads the caller's turn, decides which tool to call and with what arguments, then writes the spoken reply. Cheapest tier, text-only — and fixed-schema tool selection is essentially the classification-and-routing job it is built for. |
+| **Amazon Nova Lite** | Same job, one step up from Micro — the step-up candidate if Micro misfires on ambiguous or accented phrasing. |
+| **Claude Haiku 4.5** | Same job again, and the reference point for tool-call accuracy on hard, accented input — the step-up candidate when accuracy outweighs cost. |
+| **Amazon Nova 2 Sonic** | Path B in a single model: caller audio in, reasoning and tool calling, agent audio out — collapsing the entire Transcribe → Bedrock → Polly chain into one bidirectional stream. |
+| **Amazon Transcribe** | Path A speech-in: streams caller audio to text so the text model has something to reason over. |
+| **Amazon Polly** | Path A speech-out: turns the agent's text reply into neural speech. |
+| **Amazon Translate** | Renders turns across languages for non-English callers. Being tested against letting the reasoning model translate inline. |
+
+Because the model is a swappable backend, swapping costs nothing but a config change. Temp-0 tool calling against a fixed schema is an easy task that does not need a frontier model — which is why Nova Micro carries the loop today, with Nova Lite and Claude Haiku 4.5 waiting as step-ups only if tool-call accuracy on ambiguous or accented input proves insufficient. The validator backstops the *write* path regardless of which model proposed the call — but it does not govern reads, routing, or escalation, so model quality still matters where the gate does not reach.
+
+Planned next, not yet built: the Transcribe and Polly voice layer (Path A), Nova 2 Sonic speech-to-speech (Path B), and Translate for multilingual callers.
 
 ## Where it runs
 
@@ -136,7 +131,7 @@ The app tier runs on a $4 DigitalOcean droplet standing in for an operator's own
 
 Context — the transcript, tool results, and injected account data — is assembled and held **in our own process, on our own compute**. Only a copy leaves, and only for inference. A managed agent runtime would invert this: context assembly and session state would become vendor-held artifacts.
 
-Residency is enforced, not merely configured: an SCP denying `bedrock:InvokeModel` outside approved Regions, the Organizations AI-services opt-out policy, KMS customer-managed keys, and CloudTrail as the proof of where a call actually ran.
+Residency would be enforced, not merely configured: an SCP denying `bedrock:InvokeModel` outside approved Regions, the Organizations AI-services opt-out policy, KMS customer-managed keys, and CloudTrail as the proof of where a call actually ran. The rungs above the first are design positions, not provisioned in this MVP.
 
 ## Where it breaks
 
@@ -144,7 +139,7 @@ Residency is enforced, not merely configured: an SCP denying `bedrock:InvokeMode
 - **Accented speech.** Streaming Transcribe WER climbs on accented English. The cascaded path degrades gracefully — garbled text still triggers escalation. S2S failure modes are less legible.
 - **Validator rejections.** When a write is blocked the agent says so out loud rather than silently swallowing the intent. This is a feature. It also means the caller hears "I can't book that for you" more often than a demo would like.
 - **Simulator, not a network.** Site health is synthetic. Real integration is a different project.
-- **Connect is a demo convenience, not carrier telephony.** A real operator already owns PSTN/IMS interconnect and would bridge its own session border controller to the agent rather than route calls through Connect.
+- **Telephony is not wired.** Getting calls to the agent needs a CPaaS or SBC integration this MVP does not have. A real operator already owns PSTN/IMS interconnect and would bridge its own session border controller to the agent rather than route calls through a CPaaS like Amazon Connect.
 - **Managed runtime declined on purpose.** Hand-rolling the loop means owning multi-turn state, tool round-trips, and retry handling — more code and more edge cases. The trade buys portability and operational sovereignty.
 - **Private networking is not operational sovereignty.** PrivateLink and In-Region profiles keep context off the public internet and inside one Region. They do not change the fact that inference runs transiently on AWS-operated hardware. Only self-hosting clears that bar.
 - **Newest models and strictest residency can conflict.** Some models ship as inference-profile-only, which routes within a geography rather than a single Region. Sometimes you choose between the freshest model and the tightest residency claim.
